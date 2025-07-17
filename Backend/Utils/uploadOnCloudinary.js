@@ -1,7 +1,8 @@
 const cloudinary = require("cloudinary").v2;
 const fs = require("fs");
 const path = require("path");
-
+const dotenv = require("dotenv");
+dotenv.config();
 cloudinary.config({
   cloud_name: "dakhblh3a",  
   api_key: "138714524966558",  
