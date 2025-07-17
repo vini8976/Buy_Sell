@@ -8,8 +8,6 @@ const authRoutes = require("./Routes/auth.route");
 const productRoutes = require("./Routes/product.route");
 const userRoutes = require("./Routes/user.route");
 
-
-
 app.use(express.json());
 
 app.use(cors({
