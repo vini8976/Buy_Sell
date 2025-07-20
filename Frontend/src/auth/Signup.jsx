@@ -5,10 +5,10 @@ import "./Signup.css"; // 🔥 Import CSS
 
 const Signup = () => {
   const [form, setForm] = useState({
-    name: "surya",
-    email: "surya@gmail.com",
-    phoneNo: "9876543212",
-    password: "surya",
+    name: "",
+    email: "",
+    phoneNo: "",
+    password: "",
   });
 
   const navigate = useNavigate();
