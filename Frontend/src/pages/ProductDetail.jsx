@@ -1,56 +1,155 @@
-import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import API from "../api/axios";
-import "./ProductDetail.css";
+"use client"
+
+import { useParams, useNavigate } from "react-router-dom"
+import { useEffect, useState } from "react"
+import API from "../api/axios"
+import "./ProductDetail.css"
 
 const ProductDetail = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const [product, setProduct] = useState(null);
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const [product, setProduct] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     API.get(`/products/${id}`)
-      .then((res) => setProduct(res.data))
-      .catch((err) => console.error("Error fetching product:", err));
-  }, [id]);
+      .then((res) => {
+        setProduct(res.data)
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error("Error fetching product:", err)
+        setLoading(false)
+      })
+  }, [id])
 
-  if (!product) return <p className="loading">Loading...</p>;
+  if (loading)
+    return (
+      <div className="loading-container">
+        <div className="loading-spinner"></div>
+        <p>Loading product details...</p>
+      </div>
+    )
 
-  const isTransport = product.name === "Cars" || product.name === "Bikes";
+  if (!product)
+    return (
+      <div className="not-found-container">
+        <h2>Product Not Found</h2>
+        <button className="back-btn" onClick={() => navigate("/")}>
+          ← Back to Products
+        </button>
+      </div>
+    )
+
+  const isTransport = product.name === "Cars" || product.name === "Bikes"
 
   return (
-    <div className="product-detail-container">
-      <button className="back-btn" onClick={() => navigate("/")}>← Back to Products</button>
+    <div className="product-detail-page">
+      <button className="back-btn" onClick={() => navigate("/")}>
+        ← Back to Products
+      </button>
 
-      <div className="product-card">
-        <img className="product-detail-image" src={product.image} alt={product.name} />
+      <div className="product-detail-container">
+        <div className="product-image-container">
+          <img
+            className="product-detail-image"
+            src={product.image || "/placeholder.svg"}
+            alt={product.name}
+            onError={(e) => {
+              e.target.src = "/placeholder.svg"
+            }}
+          />
+        </div>
 
-        <div className="product-detail-info">
-          <h2>{product.name}</h2>
-          <p><strong>Brand:</strong> {product.category}</p>
-          <p><strong>Location:</strong> {product.location}</p>
-          <p><strong>Condition:</strong> {product.condition}</p>
-          <p><strong>Price:</strong> ₹{product.price.toLocaleString()}</p>
+        <div className="product-info-container">
+          <h1 className="product-title">{product.name}</h1>
+          <div className="product-meta">
+            <span className="product-brand">{product.category}</span>
+            <span className="product-location">
+              {product.location?.city && product.location?.state
+                ? `${product.location.city}, ${product.location.state}`
+                : product.location?.address || "Location not specified"}
+            </span>
+          </div>
 
-          {isTransport ? (
-            <p><strong>Distance Travelled:</strong> {product.distance.toLocaleString()} km</p>
-          ) : (
-            <>
-              <p><strong>Used From:</strong> {new Date(product.usedFrom).toLocaleDateString()}</p>
-              <p><strong>Used To:</strong> {new Date(product.usedTo).toLocaleDateString()}</p>
-            </>
-          )}
+          <div className="price-section">
+            <span className="price-label">Price:</span>
+            <span className="product-price">₹{product.price.toLocaleString()}</span>
+          </div>
+
+          <div className="product-specs">
+            {isTransport ? (
+              <div className="spec-item">
+                <span className="spec-label">Distance Travelled:</span>
+                <span className="spec-value">{product.distance?.toLocaleString()} km</span>
+              </div>
+            ) : (
+              <>
+                <div className="spec-item">
+                  <span className="spec-label">Used From:</span>
+                  <span className="spec-value">{new Date(product.usedFrom).toLocaleDateString()}</span>
+                </div>
+                <div className="spec-item">
+                  <span className="spec-label">Used To:</span>
+                  <span className="spec-value">{new Date(product.usedTo).toLocaleDateString()}</span>
+                </div>
+              </>
+            )}
+          </div>
 
           {product.postedBy && (
-            <>
-              <p><strong>Seller:</strong> {product.postedBy.name}</p>
-              <p><strong>Contact:</strong> +91-{product.postedBy.phone}</p>
-            </>
+            <div className="seller-info">
+              <h3>Seller Information</h3>
+              <div className="spec-item">
+                <span className="spec-label">Name:</span>
+                <span className="spec-value">{product.postedBy.name}</span>
+              </div>
+              {product.postedBy.email && (
+                <div className="spec-item">
+                  <span className="spec-label">Email:</span>
+                  <span className="spec-value">{product.postedBy.email}</span>
+                </div>
+              )}
+              {product.postedBy.phoneNo && (
+                <div className="spec-item">
+                  <span className="spec-label">Contact:</span>
+                  <span className="spec-value">+91-{product.postedBy.phoneNo}</span>
+                </div>
+              )}
+
+              <div className={`availability-status ${product.availability ? "available" : "unavailable"}`}>
+                {product.availability ? "Available for Sale" : "Currently Unavailable"}
+              </div>
+
+              {product.postedBy.phoneNo && (
+                <>
+                  <div className="contact-buttons">
+                    <a
+                      className="whatsapp-btn"
+                      href={`https://wa.me/91${product.postedBy.phoneNo}?text=Hi%20${encodeURIComponent(
+                        product.postedBy.name,
+                      )}!%20I'm%20interested%20in%20your%20${encodeURIComponent(product.name)}%20(${encodeURIComponent(product.category)})%20listed%20for%20₹${product.price.toLocaleString()}.%20Is%20it%20still%20available?`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      WhatsApp Seller
+                    </a>
+                    <a className="call-btn" href={`tel:+91${product.postedBy.phoneNo}`}>
+                      Call Now
+                    </a>
+                  </div>
+
+                  <div className="quick-contact-info">
+                    <p>💬 Click WhatsApp for instant messaging or call directly!</p>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default ProductDetail;
+export default ProductDetail

@@ -1,9 +1,10 @@
 import { Link, useNavigate } from "react-router-dom";
 import "./Navbar.css";
-import { useEffect, useState } from "react";
+import { AuthContext } from "../context/AuthContext";
+import { useContext, useEffect, useState } from "react";
 
 const Navbar = () => {
-  const [user, setUser] = useState(null);
+  const { user, setUser } = useContext(AuthContext);
   const [showDropdown, setShowDropdown] = useState(false);
   const navigate = useNavigate();
 
@@ -52,7 +53,7 @@ const Navbar = () => {
         <Link to="/add">Sell Products</Link>
         <Link to="/my">My Products</Link>
 
-        
+
         <Link to="/cart">Cart</Link>
 
         {user ? (

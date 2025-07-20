@@ -1,38 +1,39 @@
-const express = require("express");
-const app = express();
-const port = 3000;
-const cors = require("cors");
+const express = require("express")
+const app = express()
+const port = 3000
+const cors = require("cors")
 
-const connectDB = require("./DB/db");
-const authRoutes = require("./Routes/auth.route");
-const productRoutes = require("./Routes/product.route");
-const userRoutes = require("./Routes/user.route");
+const connectDB = require("./DB/db")
+const authRoutes = require("./Routes/auth.route")
+const productRoutes = require("./Routes/product.route")
+const userRoutes = require("./Routes/user.route")
+const cartRoutes = require("./Routes/cart.route")
 
-app.use(express.json());
+app.use(express.json())
 
-app.use(cors({
-  origin: ["http://localhost:5173", 'https://buy-sell-tau.vercel.app'], // Adjust this to your frontend URL
-  methods: ["GET", "POST", "PUT", "DELETE"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:5173", "https://buy-sell-tau.vercel.app"], // Adjust this to your frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+)
 
-app.get('/', (req, res) => {
-  res.send("Hello World!");
-});
+app.get("/", (req, res) => {
+  res.send("Hello World!")
+})
 
-app.use("/api/auth", authRoutes);
-app.use("/api/products", productRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/auth", authRoutes)
+app.use("/api/products", productRoutes)
+app.use("/api/user", userRoutes)
+app.use("/api/cart", cartRoutes)
 
 // Connect DB and Start Server
 connectDB().then(() => {
   app.listen(port, () => {
-    console.log(`✅ Server is running on http://localhost:${port}`);
-  });
-});
-
-
-
+    console.log(`✅ Server is running on http://localhost:${port}`)
+  })
+})
 
 // {
 //     "message": "Login successful",

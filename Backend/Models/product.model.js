@@ -1,13 +1,14 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose")
 
 const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true, 
+      required: true,
+      unique: true,
     },
     category: {
-      type: String, 
+      type: String,
       required: true,
     },
     image: {
@@ -18,8 +19,41 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
     location: {
-      type: String,
-      required: true,
+      address: {
+        type: String,
+        required: true,
+      },
+      city: {
+        type: String,
+        required: true,
+      },
+      state: {
+        type: String,
+        required: true,
+      },
+      country: {
+        type: String,
+        required: true,
+      },
+      village: {
+        type: String,
+      },
+      district: {
+        type: String,
+      },
+      pincode: {
+        type: String,
+      },
+      coordinates: {
+        latitude: {
+          type: Number,
+          required: true,
+        },
+        longitude: {
+          type: Number,
+          required: true,
+        },
+      },
     },
     usedFrom: {
       type: Date,
@@ -38,12 +72,15 @@ const productSchema = new mongoose.Schema(
     },
     postedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
   },
-  { timestamps: true }
-);
+  { timestamps: true },
+)
 
-const Product = mongoose.model('Product', productSchema);
+// Add index for geospatial queries
+productSchema.index({ "location.coordinates": "2dsphere" })
 
-module.exports = Product;
+const Product = mongoose.model("Product", productSchema)
+
+module.exports = Product

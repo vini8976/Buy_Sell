@@ -1,21 +1,25 @@
-import { useState } from "react";
-import API from "../api/axios";
-import { useNavigate } from "react-router-dom";
-import "./AddEditProduct.css";
+"use client"
+
+import { useState } from "react"
+import API from "../api/axios"
+import { useNavigate } from "react-router-dom"
+import LocationPicker from "../components/LocationPicker"
+import "./AddEditProduct.css"
+import { toast } from "react-toastify"
 
 const AddEditProduct = () => {
   const [form, setForm] = useState({
     name: "",
     category: "",
     price: "",
-    location: "",
     usedFrom: "",
     usedTo: "",
     distance: "",
-  });
+  })
 
-  const [image, setImage] = useState(null);
-  const navigate = useNavigate();
+  const [location, setLocation] = useState(null)
+  const [image, setImage] = useState(null)
+  const navigate = useNavigate()
 
   const productOptions = [
     "Cars",
@@ -30,41 +34,53 @@ const AddEditProduct = () => {
     "Real Estate",
     "Sports Equipment",
     "Toys",
-  ];
+  ]
 
-  const isTransport = form.name === "Cars" || form.name === "Bikes";
+  const isTransport = form.name === "Cars" || form.name === "Bikes"
+
+  const handleLocationSelect = (locationData) => {
+    setLocation(locationData)
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    const formData = new FormData();
-    for (const key in form) {
-      if (key === "distance" && !isTransport) continue;
-      formData.append(key, form[key]);
+    if (!location) {
+      toast.error("Please select a location on the map")
+      return
     }
-    formData.append("image", image);
+
+    const formData = new FormData()
+    for (const key in form) {
+      if (key === "distance" && !isTransport) continue
+      formData.append(key, form[key])
+    }
+
+    // Add location data as JSON string
+    formData.append("locationData", JSON.stringify(location))
+
+    formData.append("image", image)
 
     try {
-      await API.post("/products", formData);
-      navigate("/");
+      await API.post("/products", formData)
+      toast.success("Product added successfully!")
+      navigate("/")
     } catch (error) {
-      console.error("Error submitting form:", error);
+      toast.error(error.response?.data?.message || "Error submitting form or uploading image")
+      console.error("Error submitting form:", error)
     }
-  };
+  }
 
   return (
     <form className="product-form" onSubmit={handleSubmit}>
       <h2>Add Product</h2>
 
-      <select
-        name="name"
-        value={form.name}
-        onChange={(e) => setForm({ ...form, name: e.target.value })}
-        required
-      >
+      <select name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required>
         <option value="">Select Product Type</option>
         {productOptions.map((item) => (
-          <option key={item} value={item}>{item}</option>
+          <option key={item} value={item}>
+            {item}
+          </option>
         ))}
       </select>
 
@@ -83,28 +99,13 @@ const AddEditProduct = () => {
         required
       />
 
-      <input
-        placeholder="Location"
-        name="location"
-        onChange={(e) => setForm({ ...form, location: e.target.value })}
-        required
-      />
+      <LocationPicker onLocationSelect={handleLocationSelect} />
 
       <label>Used From:</label>
-      <input
-        name="usedFrom"
-        type="date"
-        onChange={(e) => setForm({ ...form, usedFrom: e.target.value })}
-        required
-      />
+      <input name="usedFrom" type="date" onChange={(e) => setForm({ ...form, usedFrom: e.target.value })} required />
 
       <label>Used To:</label>
-      <input
-        name="usedTo"
-        type="date"
-        onChange={(e) => setForm({ ...form, usedTo: e.target.value })}
-        required
-      />
+      <input name="usedTo" type="date" onChange={(e) => setForm({ ...form, usedTo: e.target.value })} required />
 
       {isTransport && (
         <input
@@ -116,16 +117,11 @@ const AddEditProduct = () => {
         />
       )}
 
-      <input
-        type="file"
-        accept="image/*"
-        onChange={(e) => setImage(e.target.files[0])}
-        required
-      />
+      <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} required />
 
       <button type="submit">Submit</button>
     </form>
-  );
-};
+  )
+}
 
-export default AddEditProduct;
+export default AddEditProduct
