@@ -1,5 +1,3 @@
-"use client"
-
 import { useEffect, useState } from "react"
 import API from "../api/axios"
 import ProductCard from "../components/ProductCard"
@@ -17,6 +15,13 @@ const Home = () => {
   useEffect(() => {
     loadAllProducts()
   }, [])
+
+  const refresh = url.searchParams.get("refresh");
+  useEffect(() => {
+    if (refresh) {
+      loadAllProducts();
+    }
+  }, [refresh]);
 
   // Real-time search - triggers whenever searchQuery changes
   useEffect(() => {

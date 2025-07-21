@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import API from "../api/axios"
 import { useNavigate } from "react-router-dom"
@@ -64,7 +62,7 @@ const AddEditProduct = () => {
     try {
       await API.post("/products", formData)
       toast.success("Product added successfully!")
-      navigate("/")
+      navigate("/?refresh=true")
     } catch (error) {
       toast.error(error.response?.data?.message || "Error submitting form or uploading image")
       console.error("Error submitting form:", error)
