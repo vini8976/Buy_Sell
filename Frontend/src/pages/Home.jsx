@@ -155,7 +155,7 @@ const Home = () => {
           <div className="search-wrapper">
             <input
               type="text"
-              placeholder="Search products, brands, or location..."
+              placeholder="Search products..."
               value={searchQuery}
               onChange={handleSearchInputChange}
               className="search-input"
