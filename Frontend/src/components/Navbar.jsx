@@ -70,7 +70,7 @@ const Navbar = () => {
     <nav className="navbar">
       <div className="logo">
         <img className="navbar__logo" src="/eagle.png" alt="logo" />
-        Surya
+        {user ? `Welcome ${user.name}!` : "Welcome to Eagle Market"}
       </div>
 
       {/* Desktop Menu */}
