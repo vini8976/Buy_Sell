@@ -16,56 +16,108 @@ const calculateDistance = (lat1, lon1, lat2, lon2) => {
 
 const createProduct = async (req, res) => {
   try {
+    console.log("Request body:", req.body)
+    console.log("Request file:", req.file)
+
     const { name, category, price, locationData, usedFrom, usedTo, distance, availability } = req.body
+
+    // Validate required fields
+    if (!name || !category || !price || !usedFrom || !usedTo) {
+      return res.status(400).json({ message: "Missing required fields: name, category, price, usedFrom, usedTo" })
+    }
+
+    if (!locationData) {
+      return res.status(400).json({ message: "Location data is required" })
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ message: "Product image is required" })
+    }
 
     let imageUrl = null
 
-    if (req.file) {
+    try {
       const uploadResult = await uploadOnCloudinary(req.file.path)
       if (uploadResult) {
         imageUrl = uploadResult.secure_url
       } else {
         return res.status(500).json({ message: "Image upload failed" })
       }
-    }
-
-    const existing = await Product.findOne({ name, postedBy: req.userId })
-    if (existing) {
-      return res.status(400).json({ message: "Product already exists" })
+    } catch (uploadError) {
+      console.error("Cloudinary upload error:", uploadError)
+      return res.status(500).json({ message: "Image upload failed" })
     }
 
     // Parse locationData if it's a string
-    const parsedLocationData = typeof locationData === "string" ? JSON.parse(locationData) : locationData
+    let parsedLocationData
+    try {
+      parsedLocationData = typeof locationData === "string" ? JSON.parse(locationData) : locationData
+      console.log("Parsed location data:", parsedLocationData)
+    } catch (parseError) {
+      console.error("Location data parse error:", parseError)
+      return res.status(400).json({ message: "Invalid location data format" })
+    }
+
+    // Validate location data
+    if (!parsedLocationData.latitude || !parsedLocationData.longitude) {
+      return res.status(400).json({ message: "Location coordinates are required" })
+    }
+
+    // Check if product already exists for this user (less strict check)
+    const existing = await Product.findOne({
+      name: name.trim(),
+      category: category.trim(),
+      postedBy: req.userId,
+      "location.coordinates.latitude": Number(parsedLocationData.latitude),
+      "location.coordinates.longitude": Number(parsedLocationData.longitude),
+    })
+
+    if (existing) {
+      return res.status(400).json({ message: "You have already posted this exact product at this location" })
+    }
+
+    // Prepare location object with fallbacks
+    const locationObject = {
+      address:
+        parsedLocationData.address ||
+        `${parsedLocationData.city || "Unknown City"}, ${parsedLocationData.state || "Unknown State"}`,
+      city: parsedLocationData.city || "",
+      state: parsedLocationData.state || "",
+      country: parsedLocationData.country || "India",
+      village: parsedLocationData.village || "",
+      district: parsedLocationData.district || "",
+      pincode: parsedLocationData.pincode || "",
+      coordinates: {
+        latitude: Number(parsedLocationData.latitude),
+        longitude: Number(parsedLocationData.longitude),
+      },
+    }
+
+    console.log("Final location object:", locationObject)
 
     const product = new Product({
-      name,
-      category,
-      price,
-      location: {
-        address: parsedLocationData.address,
-        city: parsedLocationData.city,
-        state: parsedLocationData.state,
-        country: parsedLocationData.country,
-        village: parsedLocationData.village,
-        district: parsedLocationData.district,
-        pincode: parsedLocationData.pincode,
-        coordinates: {
-          latitude: Number.parseFloat(parsedLocationData.latitude),
-          longitude: Number.parseFloat(parsedLocationData.longitude),
-        },
-      },
-      usedFrom,
-      usedTo,
-      distance,
-      availability,
+      name: name.trim(),
+      category: category.trim(),
+      price: Number(price),
+      location: locationObject,
+      usedFrom: new Date(usedFrom),
+      usedTo: new Date(usedTo),
+      distance: distance ? Number(distance) : undefined,
+      availability: availability === "true" || availability === true,
       image: imageUrl,
       postedBy: req.userId,
     })
 
+    console.log("Product object before save:", product)
+
     await product.save()
-    res.status(201).json({ message: "Product created", product })
+    res.status(201).json({ message: "Product created successfully", product })
   } catch (error) {
-    res.status(500).json({ error: error.message })
+    console.error("Product creation error:", error)
+    res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+    })
   }
 }
 
@@ -158,13 +210,13 @@ const updateProduct = async (req, res) => {
     if (locationData) {
       const parsedLocationData = typeof locationData === "string" ? JSON.parse(locationData) : locationData
       product.location = {
-        address: parsedLocationData.address,
-        city: parsedLocationData.city,
-        state: parsedLocationData.state,
-        country: parsedLocationData.country,
-        village: parsedLocationData.village,
-        district: parsedLocationData.district,
-        pincode: parsedLocationData.pincode,
+        address: parsedLocationData.address || `${parsedLocationData.city}, ${parsedLocationData.state}`,
+        city: parsedLocationData.city || "",
+        state: parsedLocationData.state || "",
+        country: parsedLocationData.country || "India",
+        village: parsedLocationData.village || "",
+        district: parsedLocationData.district || "",
+        pincode: parsedLocationData.pincode || "",
         coordinates: {
           latitude: Number.parseFloat(parsedLocationData.latitude),
           longitude: Number.parseFloat(parsedLocationData.longitude),

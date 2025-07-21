@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react"
 import API from "../api/axios"
 import { useNavigate } from "react-router-dom"
@@ -17,6 +19,7 @@ const AddEditProduct = () => {
 
   const [location, setLocation] = useState(null)
   const [image, setImage] = useState(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   const productOptions = [
@@ -37,35 +40,98 @@ const AddEditProduct = () => {
   const isTransport = form.name === "Cars" || form.name === "Bikes"
 
   const handleLocationSelect = (locationData) => {
+    console.log("Location selected:", locationData)
     setLocation(locationData)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    if (!location) {
-      toast.error("Please select a location on the map")
-      return
-    }
-
-    const formData = new FormData()
-    for (const key in form) {
-      if (key === "distance" && !isTransport) continue
-      formData.append(key, form[key])
-    }
-
-    // Add location data as JSON string
-    formData.append("locationData", JSON.stringify(location))
-
-    formData.append("image", image)
+    setIsSubmitting(true)
 
     try {
-      await API.post("/products", formData)
-      toast.success("Product added successfully!")
-      navigate("/?refresh=true")
+      // Validation
+      if (!form.name || !form.category || !form.price || !form.usedFrom || !form.usedTo) {
+        toast.error("Please fill in all required fields")
+        return
+      }
+
+      if (!location) {
+        toast.error("Please select a location")
+        return
+      }
+
+      if (!location.latitude || !location.longitude) {
+        toast.error("Please select a valid location with coordinates")
+        return
+      }
+
+      if (!image) {
+        toast.error("Please select an image for your product")
+        return
+      }
+
+      if (isTransport && !form.distance) {
+        toast.error("Please enter the distance travelled")
+        return
+      }
+
+      // Create FormData
+      const formData = new FormData()
+
+      // Add basic fields
+      formData.append("name", form.name.trim())
+      formData.append("category", form.category.trim())
+      formData.append("price", form.price.toString())
+      formData.append("usedFrom", form.usedFrom)
+      formData.append("usedTo", form.usedTo)
+      formData.append("availability", "true")
+
+      // Add distance only for transport items
+      if (isTransport && form.distance) {
+        formData.append("distance", form.distance.toString())
+      }
+
+      // Prepare location data - ensure all required fields are present
+      const locationData = {
+        address: location.address || `${location.city || "Selected Location"}, ${location.state || "Unknown"}`,
+        city: location.city || "",
+        state: location.state || "",
+        country: location.country || "India",
+        village: location.village || "",
+        district: location.district || "",
+        pincode: location.pincode || "",
+        latitude: Number(location.latitude),
+        longitude: Number(location.longitude),
+      }
+
+      formData.append("locationData", JSON.stringify(locationData))
+      formData.append("image", image)
+
+      // Debug: Log what we're sending
+      console.log("Submitting form with data:")
+      console.log("Form fields:", form)
+      console.log("Location data:", locationData)
+      console.log("Image:", image)
+
+      const response = await API.post("/products", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      })
+
+      if (response.status === 201) {
+        toast.success("Product added successfully!")
+        navigate("/")
+      }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Error submitting form or uploading image")
       console.error("Error submitting form:", error)
+      console.error("Error response:", error.response?.data)
+
+      const errorMessage =
+        error.response?.data?.message || error.response?.data?.error || "Failed to add product. Please try again."
+      toast.error(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -73,51 +139,92 @@ const AddEditProduct = () => {
     <form className="product-form" onSubmit={handleSubmit}>
       <h2>Add Product</h2>
 
-      <select name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required>
-        <option value="">Select Product Type</option>
-        {productOptions.map((item) => (
-          <option key={item} value={item}>
-            {item}
-          </option>
-        ))}
-      </select>
+      <div className="form-group">
+        <label>Product Type *</label>
+        <select name="name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required>
+          <option value="">Select Product Type</option>
+          {productOptions.map((item) => (
+            <option key={item} value={item}>
+              {item}
+            </option>
+          ))}
+        </select>
+      </div>
 
-      <input
-        placeholder="Brand Name"
-        name="category"
-        onChange={(e) => setForm({ ...form, category: e.target.value })}
-        required
-      />
+      <div className="form-group">
+        <label>Brand Name *</label>
+        <input
+          placeholder="Enter brand name"
+          name="category"
+          value={form.category}
+          onChange={(e) => setForm({ ...form, category: e.target.value })}
+          required
+        />
+      </div>
 
-      <input
-        placeholder="Price"
-        name="price"
-        type="number"
-        onChange={(e) => setForm({ ...form, price: e.target.value })}
-        required
-      />
+      <div className="form-group">
+        <label>Price (₹) *</label>
+        <input
+          placeholder="Enter price"
+          name="price"
+          type="number"
+          min="1"
+          value={form.price}
+          onChange={(e) => setForm({ ...form, price: e.target.value })}
+          required
+        />
+      </div>
 
       <LocationPicker onLocationSelect={handleLocationSelect} />
 
-      <label>Used From:</label>
-      <input name="usedFrom" type="date" onChange={(e) => setForm({ ...form, usedFrom: e.target.value })} required />
-
-      <label>Used To:</label>
-      <input name="usedTo" type="date" onChange={(e) => setForm({ ...form, usedTo: e.target.value })} required />
-
-      {isTransport && (
+      <div className="form-group">
+        <label>Used From *</label>
         <input
-          placeholder="Distance Travelled (in km)"
-          name="distance"
-          type="number"
-          onChange={(e) => setForm({ ...form, distance: e.target.value })}
+          name="usedFrom"
+          type="date"
+          value={form.usedFrom}
+          onChange={(e) => setForm({ ...form, usedFrom: e.target.value })}
           required
         />
+      </div>
+
+      <div className="form-group">
+        <label>Used To *</label>
+        <input
+          name="usedTo"
+          type="date"
+          value={form.usedTo}
+          onChange={(e) => setForm({ ...form, usedTo: e.target.value })}
+          required
+        />
+      </div>
+
+      {isTransport && (
+        <div className="form-group">
+          <label>Distance Travelled (km) *</label>
+          <input
+            placeholder="Enter distance in kilometers"
+            name="distance"
+            type="number"
+            min="0"
+            value={form.distance}
+            onChange={(e) => setForm({ ...form, distance: e.target.value })}
+            required
+          />
+        </div>
       )}
 
-      <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} required />
+      <div className="form-group">
+        <label>Product Image *</label>
+        <input type="file" accept="image/*" onChange={(e) => setImage(e.target.files[0])} required />
+        {image && (
+          <p style={{ fontSize: "0.9rem", color: "#28a745", marginTop: "0.5rem" }}>✓ Image selected: {image.name}</p>
+        )}
+      </div>
 
-      <button type="submit">Submit</button>
+      <button type="submit" disabled={isSubmitting}>
+        {isSubmitting ? "Adding Product..." : "Add Product"}
+      </button>
     </form>
   )
 }

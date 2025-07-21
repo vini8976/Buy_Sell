@@ -30,12 +30,43 @@ const ProductCard = ({ product, showDistance = false }) => {
     }
   }
 
-  // Format location display
+  // Format location display - show only city, state, country
   const getLocationDisplay = () => {
-    if (product.location?.city && product.location?.state) {
-      return `${product.location.city}, ${product.location.state}`
+    const parts = []
+
+    if (product.location?.city) {
+      parts.push(product.location.city)
     }
-    return product.location?.address || product.location || "Location not specified"
+
+    if (product.location?.state) {
+      parts.push(product.location.state)
+    }
+
+    if (product.location?.country && product.location.country !== "India") {
+      parts.push(product.location.country)
+    }
+
+    // If we have city/state/country, join them with commas
+    if (parts.length > 0) {
+      return parts.join(", ")
+    }
+
+    // Fallback: if no city/state, try to extract from address
+    if (product.location?.address) {
+      // Try to extract city and state from address
+      const addressParts = product.location.address.split(",")
+      if (addressParts.length >= 2) {
+        // Take the last 2-3 parts which usually contain city, state
+        return addressParts
+          .slice(-2)
+          .map((part) => part.trim())
+          .join(", ")
+      }
+      // If address is short, just show it
+      return product.location.address
+    }
+
+    return "Location not specified"
   }
 
   return (

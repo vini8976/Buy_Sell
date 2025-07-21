@@ -5,7 +5,6 @@ const productSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true,
     },
     category: {
       type: String,
@@ -25,15 +24,16 @@ const productSchema = new mongoose.Schema(
       },
       city: {
         type: String,
-        required: true,
+        required: false, // Changed from required: true to false
       },
       state: {
         type: String,
-        required: true,
+        required: false, // Changed from required: true to false
       },
       country: {
         type: String,
-        required: true,
+        required: false, // Changed from required: true to false
+        default: "India",
       },
       village: {
         type: String,

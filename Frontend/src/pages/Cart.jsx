@@ -56,6 +56,40 @@ const Cart = () => {
     return cartItems.reduce((total, item) => total + item.price, 0)
   }
 
+  // Format location display for cart items - show only city, state, country
+  const getLocationDisplay = (location) => {
+    const parts = []
+
+    if (location?.city) {
+      parts.push(location.city)
+    }
+
+    if (location?.state) {
+      parts.push(location.state)
+    }
+
+    if (location?.country && location.country !== "India") {
+      parts.push(location.country)
+    }
+
+    if (parts.length > 0) {
+      return parts.join(", ")
+    }
+
+    if (location?.address) {
+      const addressParts = location.address.split(",")
+      if (addressParts.length >= 2) {
+        return addressParts
+          .slice(-2)
+          .map((part) => part.trim())
+          .join(", ")
+      }
+      return location.address
+    }
+
+    return "Location not specified"
+  }
+
   if (!user) {
     return (
       <div className="cart-container">
@@ -106,11 +140,7 @@ const Cart = () => {
                 <div className="cart-item-details">
                   <h3>{item.name}</h3>
                   <p className="cart-item-category">{item.category}</p>
-                  <p className="cart-item-location">
-                    {item.location?.city && item.location?.state
-                      ? `${item.location.city}, ${item.location.state}`
-                      : item.location?.address || "Location not specified"}
-                  </p>
+                  <p className="cart-item-location">{getLocationDisplay(item.location)}</p>
                   <p className="cart-item-seller">Seller: {item.postedBy?.name}</p>
                 </div>
                 <div className="cart-item-actions">

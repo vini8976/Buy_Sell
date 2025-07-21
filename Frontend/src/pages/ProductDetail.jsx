@@ -23,6 +23,27 @@ const ProductDetail = () => {
       })
   }, [id])
 
+  // Format full location display for product detail page
+  const getFullLocationDisplay = () => {
+    if (!product.location) return "Location not specified"
+
+    const parts = []
+
+    if (product.location.address) {
+      return product.location.address
+    }
+
+    // Build address from components
+    if (product.location.village) parts.push(product.location.village)
+    if (product.location.city) parts.push(product.location.city)
+    if (product.location.district) parts.push(product.location.district)
+    if (product.location.state) parts.push(product.location.state)
+    if (product.location.pincode) parts.push(product.location.pincode)
+    if (product.location.country) parts.push(product.location.country)
+
+    return parts.length > 0 ? parts.join(", ") : "Location not specified"
+  }
+
   if (loading)
     return (
       <div className="loading-container">
@@ -65,11 +86,7 @@ const ProductDetail = () => {
           <h1 className="product-title">{product.name}</h1>
           <div className="product-meta">
             <span className="product-brand">{product.category}</span>
-            <span className="product-location">
-              {product.location?.city && product.location?.state
-                ? `${product.location.city}, ${product.location.state}`
-                : product.location?.address || "Location not specified"}
-            </span>
+            <span className="product-location">{getFullLocationDisplay()}</span>
           </div>
 
           <div className="price-section">
