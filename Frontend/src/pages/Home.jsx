@@ -16,13 +16,6 @@ const Home = () => {
     loadAllProducts()
   }, [])
 
-  const refresh = url.searchParams.get("refresh");
-  useEffect(() => {
-    if (refresh) {
-      loadAllProducts();
-    }
-  }, [refresh]);
-
   // Real-time search - triggers whenever searchQuery changes
   useEffect(() => {
     handleSearch()
