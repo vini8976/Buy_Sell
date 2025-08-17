@@ -22,7 +22,6 @@ app.use("/api/products", productRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/cart", cartRoutes);
 
-console.log(process.env.MONGO_URI);
 // Connect DB and Start Server
 connectDB().then(() => {
   app.listen(port, () => {
