@@ -69,8 +69,8 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="logo">
-        <img className="navbar__logo" src="/eagle.png" alt="logo" />
-        {user ? `Welcome ${user.name}!` : "Welcome to Eagle Market"}
+        <img className="navbar__logo" src="Buy_Sell/Frontend/public/shopping-cart-logo-design-cart-icon-ecommerce-logo-vector.jpg" alt="UrbanCart logo" />
+        {user ? `Welcome ${user.name}!` : "Welcome to UrbanCart"}
       </div>
 
       {/* Desktop Menu */}
